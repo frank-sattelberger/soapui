@@ -18,20 +18,19 @@ package com.eviware.soapui.impl.wsdl.support.http;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.support.StringUtils;
+import javax.net.ssl.*;
+import org.apache.commons.ssl.HostnameVerifier;
 import org.apache.commons.ssl.KeyMaterial;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -56,8 +55,8 @@ public class SoapUISSLSocketFactory extends SSLSocketFactory {
 
     @SuppressWarnings("deprecation")
     public SoapUISSLSocketFactory(KeyStore keyStore, String keystorePassword) throws KeyManagementException,
-            UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
-        super(keyStore);
+                UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+            super(keyStore);
 
         // trust everyone!
         X509TrustManager tm = new X509TrustManager() {
@@ -86,6 +85,12 @@ public class SoapUISSLSocketFactory extends SSLSocketFactory {
 
         setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
 
+    }
+
+    @SuppressWarnings("deprecation")
+    public SoapUISSLSocketFactory(SSLContext sslContext, final X509HostnameVerifier hostnameVerifier) throws KeyManagementException,
+            UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+        super(sslContext, hostnameVerifier);
     }
 
     private static SSLSocket enableSocket(SSLSocket socket) {

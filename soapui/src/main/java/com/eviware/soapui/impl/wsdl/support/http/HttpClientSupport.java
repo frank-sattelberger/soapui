@@ -26,6 +26,11 @@ import com.eviware.soapui.model.settings.Settings;
 import com.eviware.soapui.model.settings.SettingsListener;
 import com.eviware.soapui.settings.HttpSettings;
 import com.eviware.soapui.settings.SSLSettings;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
 import org.apache.commons.ssl.KeyMaterial;
 import org.apache.http.Header;
 import org.apache.http.HttpClientConnection;
@@ -40,6 +45,9 @@ import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLContexts;
+import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.RequestWrapper;
@@ -306,8 +314,41 @@ public class HttpClientSupport {
                     }
                 }
             }
+            return createSoapUISSLSocketFactory(keyStore, pass);
+        }
 
-            return new SoapUISSLSocketFactory(keyStore, pass);
+        @SuppressWarnings("deprecation")
+        private SoapUISSLSocketFactory createSoapUISSLSocketFactory(KeyStore keyStore, String pass) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException {
+            X509HostnameVerifier hostnameVerifier =  new X509HostnameVerifier(){
+                @Override
+                public boolean verify(String s, SSLSession sslSession) {
+                    return true;
+                }
+
+                @Override
+                public void verify(String host, SSLSocket ssl) throws IOException {
+
+                }
+
+                @Override
+                public void verify(String host, X509Certificate cert) throws SSLException {
+
+                }
+
+                @Override
+                public void verify(String host, String[] cns, String[] subjectAlts) throws SSLException {
+
+                }
+            };
+
+            // trust everyone! and allow all hostnames:
+            SSLContext sslContext = SSLContexts.custom()
+                    .loadKeyMaterial(keyStore, pass != null ? pass.toCharArray() : null)
+                    .loadTrustMaterial(null, TrustAllStrategy.INSTANCE)
+                    .build();
+
+
+            return new SoapUISSLSocketFactory(sslContext, hostnameVerifier);
         }
     }
 
