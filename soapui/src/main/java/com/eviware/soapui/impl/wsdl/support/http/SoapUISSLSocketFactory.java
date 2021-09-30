@@ -18,19 +18,6 @@ package com.eviware.soapui.impl.wsdl.support.http;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.support.StringUtils;
-import org.apache.commons.ssl.KeyMaterial;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.log4j.Logger;
-
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -45,6 +32,19 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import org.apache.commons.ssl.KeyMaterial;
+import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.log4j.Logger;
 
 public class SoapUISSLSocketFactory extends SSLSocketFactory {
     // a cache of factories for custom certificates/Keystores at the project level - never cleared
@@ -85,6 +85,12 @@ public class SoapUISSLSocketFactory extends SSLSocketFactory {
 
         setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
 
+    }
+
+    @SuppressWarnings("deprecation")
+    public SoapUISSLSocketFactory(SSLContext sslContext, final X509HostnameVerifier hostnameVerifier) throws KeyManagementException,
+        UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+        super(sslContext, hostnameVerifier);
     }
 
     private static SSLSocket enableSocket(SSLSocket socket) {
